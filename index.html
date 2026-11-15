@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PulseFit Pro - RBAC Fitness & Nutrition Platform</title>
+    <meta name="description" content="Full-stack fitness tracking platform with Role-Based Access Control (Admin, Trainer, Client), workout scheduling with embedded YouTube videos, voice-assisted macro nutrition tracking, and body metrics." />
+    <meta property="og:title" content="PulseFit Pro - RBAC Fitness & Nutrition Platform" />
+    <meta property="og:description" content="Full-stack fitness tracking platform with Role-Based Access Control (Admin, Trainer, Client), workout scheduling with embedded YouTube videos, voice-assisted macro nutrition tracking, and body metrics." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <script>
+      (function() {
+        try {
+          var mode = localStorage.getItem('pulsefit_theme_mode');
+          var hc = localStorage.getItem('pulsefit_high_contrast') === 'true';
+          var fs = localStorage.getItem('pulsefit_font_size');
+          var isDark = mode === 'dark' || (!mode && window.matchMedia('(prefers-color-scheme: dark)').matches) || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var root = document.documentElement;
+          if (isDark) {
+            root.classList.add('dark');
+            root.classList.remove('light');
+          } else {
+            root.classList.add('light');
+            root.classList.remove('dark');
+          }
+          if (hc) root.classList.add('high-contrast');
+          if (fs === 'large') root.classList.add('font-large');
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased font-sans selection:bg-emerald-500 selection:text-black min-h-screen transition-colors duration-150">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

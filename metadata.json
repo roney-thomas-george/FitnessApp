@@ -1,0 +1,11 @@
+{
+  "name": "PulseFit Pro - RBAC Fitness & Nutrition Platform",
+  "description": "Full-stack fitness tracking platform with Role-Based Access Control (Admin, Trainer, Client), workout scheduling with embedded YouTube videos, voice-assisted macro nutrition tracking, and body metrics.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

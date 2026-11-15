@@ -1,0 +1,208 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny-all catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Admin detection: checks dedicated /admins collection or configured admin email
+    function isSuperAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'byroney3@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function getUserDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+
+    function isTrainer() {
+      return isSignedIn() && (
+        isSuperAdmin() ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         getUserDoc(request.auth.uid).role == 'trainer' &&
+         getUserDoc(request.auth.uid).isActive == true)
+      );
+    }
+
+    function isActiveUser() {
+      return isSignedIn() && (
+        isSuperAdmin() ||
+        !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
+        getUserDoc(request.auth.uid).isActive == true
+      );
+    }
+
+    // Admins Collection
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isSignedIn() && (
+        userId == request.auth.uid ||
+        isTrainer() ||
+        isSuperAdmin()
+      );
+
+      // New users can create their initial profile
+      allow create: if isSignedIn() && userId == request.auth.uid &&
+        incoming().uid == request.auth.uid &&
+        incoming().email is string &&
+        incoming().role in ['admin', 'trainer', 'user'] &&
+        incoming().isActive is bool;
+
+      // Users can update self (profile & onboarding request fields), admin can update anything (including role, isActive, trainerId)
+      allow update: if isSignedIn() && (
+        isSuperAdmin() ||
+        (
+          userId == request.auth.uid &&
+          incoming().uid == existing().uid &&
+          incoming().role == existing().role &&
+          incoming().isActive == existing().isActive &&
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'displayName',
+            'height',
+            'currentWeight',
+            'targetWeight',
+            'fitnessGoal',
+            'requestedRole',
+            'onboardingCompleted',
+            'specialty',
+            'bio',
+            'experienceYears',
+            'updatedAt'
+          ])
+        )
+      );
+
+      allow delete: if isSuperAdmin();
+    }
+
+    // Workouts Collection
+    match /workouts/{workoutId} {
+      allow read: if isSignedIn() && (
+        isSuperAdmin() ||
+        isTrainer() ||
+        (resource.data.assignedTo is list && resource.data.assignedTo.hasAny([request.auth.uid]))
+      );
+
+      allow create: if isSignedIn() && (isTrainer() || isSuperAdmin()) &&
+        incoming().title is string && incoming().title.size() <= 120 &&
+        incoming().trainerId is string;
+
+      allow update: if isSignedIn() && (isTrainer() || isSuperAdmin()) &&
+        incoming().title is string && incoming().title.size() <= 120;
+
+      allow delete: if isSignedIn() && (isTrainer() || isSuperAdmin());
+    }
+
+    // Workout Logs
+    match /workoutLogs/{logId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isTrainer() ||
+        isSuperAdmin()
+      );
+
+      allow create: if isSignedIn() && isActiveUser() &&
+        incoming().userId == request.auth.uid &&
+        incoming().workoutTitle is string;
+
+      allow update: if isSignedIn() && (
+        isSuperAdmin() ||
+        (resource.data.userId == request.auth.uid && incoming().userId == existing().userId)
+      );
+
+      allow delete: if isSignedIn() && (
+        isSuperAdmin() ||
+        resource.data.userId == request.auth.uid
+      );
+    }
+
+    // Diet Plans
+    match /dietPlans/{planId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.trainerId == request.auth.uid ||
+        isSuperAdmin()
+      );
+
+      allow create, update: if isSignedIn() && (isTrainer() || isSuperAdmin()) &&
+        incoming().userId is string &&
+        incoming().targetCalories is number;
+
+      allow delete: if isSignedIn() && (isTrainer() || isSuperAdmin());
+    }
+
+    // Food Logs
+    match /foodLogs/{logId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isTrainer() ||
+        isSuperAdmin()
+      );
+
+      allow create: if isSignedIn() && isActiveUser() &&
+        incoming().userId == request.auth.uid &&
+        incoming().date is string &&
+        incoming().items is list;
+
+      allow update: if isSignedIn() && (
+        isSuperAdmin() ||
+        (resource.data.userId == request.auth.uid && incoming().userId == existing().userId)
+      );
+
+      allow delete: if isSignedIn() && (
+        isSuperAdmin() ||
+        resource.data.userId == request.auth.uid
+      );
+    }
+
+    // Weight History
+    match /weightHistory/{historyId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isTrainer() ||
+        isSuperAdmin()
+      );
+
+      allow create: if isSignedIn() && isActiveUser() &&
+        incoming().userId == request.auth.uid &&
+        incoming().weight is number;
+
+      allow update: if isSignedIn() && (
+        isSuperAdmin() ||
+        (resource.data.userId == request.auth.uid && incoming().userId == existing().userId)
+      );
+
+      allow delete: if isSignedIn() && (
+        isSuperAdmin() ||
+        resource.data.userId == request.auth.uid
+      );
+    }
+  }
+}

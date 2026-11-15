@@ -1,0 +1,129 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role and assignment details",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 128 },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "role": { "type": "string", "enum": ["admin", "trainer", "user"] },
+        "isActive": { "type": "boolean" },
+        "trainerId": { "type": "string", "maxLength": 128 },
+        "height": { "type": "number" },
+        "currentWeight": { "type": "number" },
+        "createdAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["uid", "email", "role", "isActive"]
+    },
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Admin authorization entry",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 128 },
+        "grantedAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["uid", "email"]
+    },
+    "Workout": {
+      "title": "Workout",
+      "description": "A workout routine created by a trainer or admin",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 120 },
+        "muscleGroup": { "type": "string", "maxLength": 60 },
+        "trainerId": { "type": "string", "maxLength": 128 },
+        "assignedTo": { "type": "array" },
+        "exercises": { "type": "array" },
+        "scheduledDate": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["title", "trainerId"]
+    },
+    "WorkoutLog": {
+      "title": "WorkoutLog",
+      "description": "Log of a workout session completed by a user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "workoutId": { "type": "string", "maxLength": 128 },
+        "workoutTitle": { "type": "string", "maxLength": 120 },
+        "completedAt": { "type": "string", "maxLength": 50 },
+        "details": { "type": "array" }
+      },
+      "required": ["userId", "completedAt"]
+    },
+    "DietPlan": {
+      "title": "DietPlan",
+      "description": "Diet and macro target assigned to a user",
+      "type": "object",
+      "properties": {
+        "trainerId": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "targetCalories": { "type": "number" },
+        "targetMacros": { "type": "object" },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "updatedAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["userId", "targetCalories"]
+    },
+    "FoodLog": {
+      "title": "FoodLog",
+      "description": "Record of food items eaten by a user on a given date",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "date": { "type": "string", "maxLength": 20 },
+        "items": { "type": "array" },
+        "loggedVia": { "type": "string", "enum": ["manual", "voice"] },
+        "loggedAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["userId", "date", "items"]
+    },
+    "WeightRecord": {
+      "title": "WeightRecord",
+      "description": "Body weight log entry for a user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "weight": { "type": "number" },
+        "date": { "type": "string", "maxLength": 30 },
+        "bmi": { "type": "number" }
+      },
+      "required": ["userId", "weight", "date"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and RBAC role metadata"
+    },
+    "/admins/{adminId}": {
+      "schema": "AdminRecord",
+      "description": "Registry of system administrators"
+    },
+    "/workouts/{workoutId}": {
+      "schema": "Workout",
+      "description": "Workout library and routine assignments"
+    },
+    "/workoutLogs/{logId}": {
+      "schema": "WorkoutLog",
+      "description": "User workout completion history"
+    },
+    "/dietPlans/{planId}": {
+      "schema": "DietPlan",
+      "description": "Daily/weekly nutrition targets"
+    },
+    "/foodLogs/{logId}": {
+      "schema": "FoodLog",
+      "description": "Daily food intake records"
+    },
+    "/weightHistory/{historyId}": {
+      "schema": "WeightRecord",
+      "description": "Historical weight tracking points"
+    }
+  }
+}
